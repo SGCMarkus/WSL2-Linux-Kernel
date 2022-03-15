@@ -627,12 +627,14 @@ retry:
 
 		/* bio_alloc() with __GFP_WAIT never returns NULL */
 #ifdef HAVE_BIO_MAX_SEGS
-		dr->dr_bio[i] = bio_alloc(GFP_NOIO, bio_max_segs(
-		    abd_nr_pages_off(zio->io_abd, bio_size, abd_offset)));
+		dr->dr_bio[i] = bio_alloc(bdev, bio_max_segs(
+		    abd_nr_pages_off(zio->io_abd, bio_size, abd_offset)),
+		    rw | flags, GFP_NOIO);
 #else
-		dr->dr_bio[i] = bio_alloc(GFP_NOIO,
+		dr->dr_bio[i] = bio_alloc(bdev,
 		    MIN(abd_nr_pages_off(zio->io_abd, bio_size, abd_offset),
-		    BIO_MAX_PAGES));
+		        BIO_MAX_PAGES),
+		    rw | flags, GFP_NOIO);
 #endif
 		if (unlikely(dr->dr_bio[i] == NULL)) {
 			vdev_disk_dio_free(dr);
@@ -642,11 +644,9 @@ retry:
 		/* Matching put called by vdev_disk_physio_completion */
 		vdev_disk_dio_get(dr);
 
-		bio_set_dev(dr->dr_bio[i], bdev);
 		BIO_BI_SECTOR(dr->dr_bio[i]) = bio_offset >> 9;
 		dr->dr_bio[i]->bi_end_io = vdev_disk_physio_completion;
 		dr->dr_bio[i]->bi_private = dr;
-		bio_set_op_attrs(dr->dr_bio[i], rw, flags);
 
 		/* Remaining size is returned to become the new size */
 		bio_size = abd_bio_map_off(dr->dr_bio[i], zio->io_abd,
@@ -706,14 +706,13 @@ vdev_disk_io_flush(struct block_device *bdev, zio_t *zio)
 	if (!q)
 		return (SET_ERROR(ENXIO));
 
-	bio = bio_alloc(GFP_NOIO, 0);
+	bio = bio_alloc(bdev, 0, 0, GFP_NOIO);
 	/* bio_alloc() with __GFP_WAIT never returns NULL */
 	if (unlikely(bio == NULL))
 		return (SET_ERROR(ENOMEM));
 
 	bio->bi_end_io = vdev_disk_io_flush_completion;
 	bio->bi_private = zio;
-	bio_set_dev(bio, bdev);
 	bio_set_flush(bio);
 	vdev_submit_bio(bio);
 	invalidate_bdev(bdev);
