@@ -21,7 +21,7 @@
 
 
 /* --- Error management --- */
-unsigned HIST_isError(size_t code) { return ERR_isError(code); }
+unsigned zstd_HIST_isError(size_t code) { return ERR_isError(code); }
 
 /*-**************************************************************
  *  Histogram functions

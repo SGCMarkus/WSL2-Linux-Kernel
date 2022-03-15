@@ -24,13 +24,13 @@
  * 'count' is a table of unsigned int, of minimum size (*maxSymbolValuePtr+1).
  *  Updates *maxSymbolValuePtr with actual largest symbol value detected.
  * @return : count of the most frequent symbol (which isn't identified).
- *           or an error code, which can be tested using HIST_isError().
+ *           or an error code, which can be tested using zstd_HIST_isError().
  *           note : if return == srcSize, there is only one symbol.
  */
 size_t HIST_count(unsigned* count, unsigned* maxSymbolValuePtr,
                   const void* src, size_t srcSize);
 
-unsigned HIST_isError(size_t code);  /**< tells if a return value is an error code */
+unsigned zstd_HIST_isError(size_t code);  /**< tells if a return value is an error code */
 
 
 /* --- advanced histogram functions --- */
